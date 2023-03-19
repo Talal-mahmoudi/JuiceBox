@@ -14,6 +14,8 @@ async function createUser({
         ON CONFLICT (username) DO NOTHING 
         RETURNING *;
       `, [username, password, name, location]);
+      console.log("This is the createUser's user obj");
+      console.log(user);
   
       return user;
     } catch (error) {
@@ -64,8 +66,9 @@ async function createUser({
       const { rows: [ user ] } = await client.query(`
         SELECT id, username, name, location, active
         FROM users
-        WHERE id=${ userId }
+        WHERE id=${ userId };
       `);
+      console.log(user);
   
       if (!user) {
         return null
@@ -268,6 +271,12 @@ async function createUser({
       `, [postId])
         // console.log(post);
         // console.log("finished");
+        if(!post) {
+            throw{
+                name: "PostNotFoundError",
+                message: "could not find a post with that postId"
+            };
+        }
       const { rows: [author] } = await client.query(`
         SELECT id, username, name, location
         FROM users
@@ -303,8 +312,45 @@ async function createUser({
     }
   }
 
+  async function getAllTags() {
+    try {
+      const { rows } = await client.query(`
+        SELECT * 
+        FROM tags;
+      `);
+  
+      return rows
+    } catch (error) {
+      throw error;
+    }
+  }
+  async function getUserByUsername(username) {
+    try {
+      const { rows} = await client.query(`
+        SELECT *
+        FROM users
+        WHERE username=$1;
+      `,[username]);
+      console.log("This is the getUserByUsername function");
+        console.log(rows[0]);
+      
+      
+      if(rows.length){
+        console.log("user already exists");
+        rows[0].posts = await getPostsByUser(rows[0].id);
+        return rows[0];
+      }else{
+        return undefined;
+      }
+    //   return ;
+    } catch (error) {
+      throw error;
+    }
+  }
+
 module.exports = {
     client,
+    getUserByUsername,
     getAllUsers,
     createUser,
     updateUser,
@@ -319,4 +365,5 @@ module.exports = {
     createPostTag,
     addTagsToPost,
     getPostsByTagName,
+    getAllTags
 }
