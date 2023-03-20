@@ -118,7 +118,15 @@ postsRouter.get('/', async (req,res)=>{
     try {
         
         const allPosts = await getAllPosts();
-        const posts = allPosts.filter(post=>{
+        const allActivePosts = allPosts.filter(post=>{
+            // if(post.author.active){
+            //     return true;
+            // }
+            // return false;
+            //or
+            return post.author.active;
+        })
+        const posts = allActivePosts.filter(post=>{
             // if(post.active){
             //     return true;
             // }

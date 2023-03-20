@@ -9,7 +9,8 @@ async function myJwt(){
 }
 // myJwt();
 
-const {getAllUsers, getUserByUsername, createUser} = require('../db');
+const {getAllUsers, getUserByUsername, createUser, getUserById, updateUser} = require('../db');
+const { requireUser } = require('./utils');
 
 usersRouter.use((req, res, next) => {
   console.log("A request is being made to /users");
@@ -96,6 +97,31 @@ usersRouter.post('/register', async (req, res, next) => {
       next({ name, message })
     } 
   });
+
+  usersRouter.delete('/:userId',requireUser, async (req,res, next) =>{
+    try {
+        const user = await getUserById(req.params.userId);
+        if (user && user.id === req.user.id) {
+            const updatedUser = await updateUser(user.id, { active: false });
+    
+            res.send({ user: updatedUser });
+        }else{
+            next(user ? { 
+                name: "UnauthorizedUserError",
+                message: "You cannot delete a User"
+                } : {
+                name: "User not found",
+                message: "That User doesn't exist"
+                });
+        }
+    } catch ({name, message}) {
+        next({
+            name,
+            message
+        })
+    }
+
+  })
 
 module.exports = usersRouter;
 
